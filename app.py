@@ -8,19 +8,94 @@ from db import init_db, seed_packages_if_empty, get_conn
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(page_title="Photography Booking", page_icon="📸", layout="wide")
 
-# ----------------- STYLES -----------------
+# ----------------- STYLES (Wedding Luxury) -----------------
 st.markdown("""
 <style>
-.big-title { text-align: center; font-size: 36px; font-weight: bold; }
-.subtitle { text-align: center; font-size: 18px; margin-top: 10px; }
+.big-title { text-align: center; font-size: 36px; font-weight: 800; }
+.subtitle { text-align: center; font-size: 18px; margin-top: 10px; color: rgba(40,40,40,0.75); }
+
+/* --- Wedding Luxury section styles --- */
+.lux-wrap { max-width: 980px; margin: 0 auto; }
+.lux-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 18px;
+  padding: 26px 26px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+}
+.lux-title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+}
+.lux-divider {
+  height: 1px;
+  width: 140px;
+  margin: 12px auto 18px auto;
+  background: linear-gradient(90deg, rgba(212,175,55,0), rgba(212,175,55,0.95), rgba(212,175,55,0));
+}
+.lux-text { text-align: center; font-size: 16px; line-height: 1.7; color: rgba(35,35,35,0.90); }
+.lux-pill-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 14px; }
+.lux-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(255, 250, 235, 0.75);
+  font-size: 14px;
+}
+.lux-cta-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top: 18px; }
+.lux-btn {
+  display:inline-block;
+  padding: 12px 22px;
+  border-radius: 14px;
+  text-decoration:none;
+  font-weight: 900;
+  border: 1px solid rgba(212, 175, 55, 0.7);
+  background: linear-gradient(180deg, rgba(255,250,235,0.95), rgba(255,245,220,0.85));
+  color: rgba(25,25,25,0.95);
+  transition: all 0.35s ease;
+}
+
+/* Hover Animation */
+.lux-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.45);
+  background: linear-gradient(180deg, rgba(255,245,220,1), rgba(255,230,180,0.9));
+}
+}
+.lux-note { text-align:center; font-size: 13px; color: rgba(50,50,50,0.65); margin-top: 10px; }
+
+.stButton>button {
+  height: 56px;
+  font-size: 17px;
+  font-weight: 900;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.6);
+  background: linear-gradient(180deg, #fff8e8, #fff2cc);
+  color: #222;
+  transition: all 0.35s ease;
+}
+
+/* Hover Effect */
+.stButton>button:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+  background: linear-gradient(180deg, #fff2cc, #ffe4a3);
+  border: 1px solid rgba(212, 175, 55, 0.9);
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ----------------- HELPERS -----------------
 def add_bg_image(image_file: str):
-    """Top banner image using base64 (works on Streamlit Cloud too)."""
+    """
+    Banner image using base64.
+    Put your banner at: images/banner.jpg
+    """
     if not os.path.exists(image_file):
-        st.warning(f"Banner not found: {image_file}")
+        st.warning(f"Banner image not found: {image_file}")
         return
 
     with open(image_file, "rb") as f:
@@ -48,7 +123,7 @@ def whatsapp_link(phone_number: str, message: str) -> str:
     phone = phone_number.strip().replace(" ", "").replace("-", "")
     if phone.startswith("+"):
         phone = phone[1:]
-    # If 10 digits, assume India +91
+    # If user enters 10 digits, assume India (+91)
     if len(phone) == 10:
         phone = "91" + phone
 
@@ -62,17 +137,13 @@ seed_packages_if_empty()
 # ----------------- DB FUNCTIONS -----------------
 def fetch_packages():
     conn = get_conn()
-    df = pd.read_sql_query(
-        "SELECT * FROM packages WHERE is_active=1 ORDER BY price ASC", conn
-    )
+    df = pd.read_sql_query("SELECT * FROM packages WHERE is_active=1 ORDER BY price ASC", conn)
     conn.close()
     return df
 
 def fetch_all_packages_admin():
     conn = get_conn()
-    df = pd.read_sql_query(
-        "SELECT * FROM packages ORDER BY id DESC", conn
-    )
+    df = pd.read_sql_query("SELECT * FROM packages ORDER BY id DESC", conn)
     conn.close()
     return df
 
@@ -137,7 +208,7 @@ def update_booking_status(booking_id, status):
     conn.commit()
     conn.close()
 
-# ----------------- STATE -----------------
+# ----------------- STATE INIT -----------------
 if "home_view" not in st.session_state:
     st.session_state.home_view = "home"  # home | packages | book
 
@@ -150,7 +221,7 @@ if main_page == "🏠 Home":
 
     # ---- HOME MAIN SCREEN ----
     if st.session_state.home_view == "home":
-        # Banner (your file is banner.jpg)
+        # Banner (make sure this file exists in repo)
         add_bg_image(os.path.join("images", "banner.jpg"))
 
         st.markdown("<div class='big-title'>📸 Welcome to EAGLE DIGITAL AND GRAPHICS</div>", unsafe_allow_html=True)
@@ -179,6 +250,22 @@ if main_page == "🏠 Home":
             if st.button("Open Book Now", use_container_width=True):
                 st.session_state.home_view = "book"
                 st.rerun()
+
+        # ---- Wedding Luxury About/Contact ----
+        st.divider()
+        st.markdown("<div class='lux-wrap'>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="lux-card">
+          <div class="lux-cta-row">
+             <a class="lux-btn" href="https://wa.me/918072123858" target="_blank">💬 WhatsApp</a>
+             <a class="lux-btn" href="tel:+918072123858">📞 Call Now</a>
+             <a class="lux-btn" href="mailto:venkatraja1002@gmail.com">📧 Email</a>
+          </div>
+
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # ---- PACKAGES PAGE ----
     elif st.session_state.home_view == "packages":
@@ -216,19 +303,13 @@ if main_page == "🏠 Home":
         if packages.empty:
             st.warning("Packages not available. Please add packages first.")
         else:
-            package_options = {
-                f"{r['name']} (₹{r['price']})": int(r["id"])
-                for _, r in packages.iterrows()
-            }
+            package_options = {f"{r['name']} (₹{r['price']})": int(r["id"]) for _, r in packages.iterrows()}
 
             with st.form("booking_form"):
                 customer_name = st.text_input("Your Name *")
                 phone = st.text_input("Phone Number *")
                 email = st.text_input("Email (optional)")
-                event_type = st.selectbox(
-                    "Event Type *",
-                    ["Wedding", "Pre-Wedding", "Birthday", "Outdoor", "Baby Shoot", "Other"]
-                )
+                event_type = st.selectbox("Event Type *", ["Wedding", "Pre-Wedding", "Birthday", "Outdoor", "Baby Shoot", "Other"])
                 event_date = st.date_input("Event Date *")
                 event_date_str = str(event_date)
                 location = st.text_input("Location *")
@@ -253,7 +334,7 @@ if main_page == "🏠 Home":
 
                     st.success("Booking request submitted! ✅ We will contact you soon.")
 
-                    # CHANGE THIS to your brother's WhatsApp number
+                    # Photographer WhatsApp number (10 digits OK; +91 auto added)
                     PHOTOGRAPHER_WA = "8072123858"
 
                     wa_msg = (
@@ -275,7 +356,6 @@ else:
     st.title("🔐 Admin Panel")
 
     password = st.text_input("Admin Password", type="password")
-
     admin_pw = st.secrets.get("ADMIN_PASSWORD", "")
     if password != admin_pw:
         st.warning("Wrong password.")
@@ -283,7 +363,6 @@ else:
 
     tab1, tab2 = st.tabs(["📋 Bookings", "📦 Manage Packages"])
 
-    # ---- BOOKINGS TAB ----
     with tab1:
         st.subheader("📋 All Bookings")
         bookings = fetch_bookings()
@@ -298,7 +377,6 @@ else:
                 st.success(f"Updated booking {booking_id} to {new_status}")
                 st.rerun()
 
-    # ---- PACKAGES TAB ----
     with tab2:
         st.subheader("📦 Manage Packages")
         all_pkgs = fetch_all_packages_admin()
